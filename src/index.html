@@ -13,22 +13,21 @@
     <ul class="layui-tab-title">
         <li class="layui-this">首页</li>
         <li>用户管理</li>
-        <li>积分管理</li>
     </ul>
     <div class="layui-tab-content">
         <div class="layui-tab-item layui-show">
-            <form class="layui-form" action="" lay-filter="user_form">
+            <form class="layui-form" action="" lay-filter="index_user_form">
                 <div class="layui-form-item">
                     <div class="layui-inline">
                         <label class="layui-form-label">卡号</label>
                         <div class="layui-input-inline">
-                            <input type="text" name="card" autocomplete="off" class="layui-input" >
+                            <input type="text" name="card" autocomplete="off" class="layui-input" id="input_index_card" lay-data="{id:'input_index_card'}">
                         </div>
                         <button id="search" class="layui-btn">查询</button>
                     </div>
                 </div>
             </form>
-            <form id="change_form" class="layui-form" action="" lay-filter="change_form" hidden>
+            <form id="index_change_form" class="layui-form" action="" lay-filter="index_change_form" hidden>
                 <div class="layui-form-item">
                     <div class="layui-inline">
                         <label class="layui-form-label">积分</label>
@@ -54,87 +53,407 @@
                 </table>
             </div>
         </div>
-        <div class="layui-tab-item">用户的增删改查</div>
-        <div class="layui-tab-item">积分的增删改查</div>
+        <div class="layui-tab-item">
+            <div class="layui-form">
+                <form class="layui-form" action="" lay-filter="manager_user_form">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">卡号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="manager_card" autocomplete="off" class="layui-input" id="input_manager_card">
+                            </div>
+                            <label class="layui-form-label">姓名</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="manager_name" autocomplete="off" class="layui-input" id="input_manager_name">
+                            </div>
+                            <label class="layui-form-label">电话</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="manager_phone" autocomplete="off" class="layui-input" id="input_manager_phone">
+                            </div>
+                            <button id="userSearch" class="layui-btn">查询</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="layui-btn-group demoTable" style="margin-left: 10px">
+                    <button class="layui-btn" id="userAdd">新增会员</button>
+                </div>
+                <table class="layui-table" lay-data="{page:true, id:'userList'}" lay-filter="userList">
+                    <thead><tr>
+                        <th lay-data="{field:'card', width:150}">卡号</th>
+                        <th lay-data="{field:'name', width:150}">姓名</th>
+                        <th lay-data="{field:'score', width:150}">积分</th>
+                        <th lay-data="{field:'last_change', width:150}">最近修改</th>
+                        <th lay-data="{field:'phone', width:150}">电话</th>
+                        <th lay-data="{field:'dress', width:200}">住址</th>
+                        <th lay-data="{field:'remarks', width:200}">备注</th>
+                        <th lay-data="{fixed: 'right', align:'center', toolbar: '#toolbarUserList'}"></th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
-
+<div id="userForm" hidden>
+    <div class="layui-form" lay-filter="userForm" style="margin-top: 20px">
+        <form class="layui-form" action="" lay-filter="manager_user_form">
+            <input type="text" name="isNew" hidden>
+            <div class="layui-form-item">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">卡号</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userCard" autocomplete="off" class="layui-input" >
+                        </div>
+                        <label class="layui-form-label">姓名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userName" autocomplete="off" class="layui-input" >
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">电话</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userPhone" autocomplete="off" class="layui-input" >
+                        </div>
+                        <label class="layui-form-label">地址</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userDress" autocomplete="off" class="layui-input" >
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">积分</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userScore" autocomplete="off" class="layui-input" >
+                        </div>
+                        <label class="layui-form-label">备注</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="userRemarks" autocomplete="off" class="layui-input" >
+                        </div>
+                    </div>
+                </div>
+                <button id="userSubmit" class="layui-btn layui-btn-lg" style="margin-left: 300px; margin-top: 20px">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="text/html" id="toolbarUserList">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="update" id="userUpdate">编辑</button>
+    </div>
+</script>
 <script src="layui/layui.js" charset="utf-8"></script>
 <script>
     const { invoke } = window.__TAURI__.tauri;
-    layui.use(['form'], function(){
+    layui.use(function(){
         const $ = layui.jquery;
         const form = layui.form;
         const table = layui.table;
         const layer = layui.layer;
-        const changeForm = $("form[lay-filter='change_form']");
-        const scoreInput = $("input[name='score']");
-        const cardInput = $("input[name='card']");
-        cardInput.trigger("focus");
-        table.init("userTable", {});
-        async function getUser(card) {
-            if (card === "") {
-                layer.msg("卡号不能为空",{time: 600});
-                return false;
-            }
-            let data = await invoke("user_info", { card: card });
-            let user = JSON.parse("{"+data+"}");
-            if (user.card === undefined) {
-                layer.msg("没有找到会员",{time: 600});
-                return false;
-            }
-            table.reload('userTable', {data: [user]});
-            changeForm.attr("hidden", false);
-            scoreInput.val("");
-            scoreInput.trigger("focus");
-        }
-        $(document).on("click", "#search", function () {
-            getUser(form.val("user_form").card);
-            return false;
-        });
-        async function addScore(card, addScore) {
-            let data = await invoke("user_add_score", { card: card, addScore: Number(addScore) });
-            let user = JSON.parse("{"+data+"}");
-            table.reload('userTable', {data: [user]});
-            changeForm.attr("hidden", true);
-            cardInput.val("");
-            cardInput.trigger("focus");
-        }
-        $(document).on("click", "#addScore", function () {
-            let card = form.val("user_form").card;
-            if (card !== table.getData("userTable")[0].card) {
-                layer.msg("输入框中卡号与查询结果中卡号不一致",{time: 600});
-                return false;
-            }
-            let score = form.val("change_form").score;
-            if (Number(score) === 0) {
-                layer.msg("积分不能为0",{time: 600});
-                return false;
-            }
-            let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
-            let keyDown = document.onkeydown;
-            let addScoreAndCloseConfirm = function (confirmIndex) {
-                document.onkeydown = keyDown;
-                addScore(card, score);
-                layer.close(confirmIndex);
-            };
-            let confirmIndex = layer.confirm(msg, {closeBtn: 0, title:"提示", }
-            , addScoreAndCloseConfirm, function () {
-                document.onkeydown = keyDown;
-            });
-            document.onkeydown = function (e) {
-                if (e.code === "NumpadEnter" || e.code === "Enter") {
-                    addScoreAndCloseConfirm(confirmIndex);
-                } else if (e.code === "Escape") {
-                    layer.close(confirmIndex);
-                    document.onkeydown = keyDown;
+        const dropdown = layui.dropdown;
+        const indexCardInput = $("#input_index_card");
+        const managerCardInput = $("#input_manager_card");
+        const managerNameInput = $("#input_manager_name");
+        const managerPhoneInput = $("#input_manager_phone");
+        let indexCardTipsPanel = undefined;
+        //首页逻辑
+        (function index() {
+            let indexChangeForm = $("form[lay-filter='index_change_form']");
+            let scoreInput = $("input[name='score']");
+            indexCardInput.trigger("focus");
+            table.init("userTable", {});
+            async function getUser(card) {
+                if (card === "") {
+                    layer.msg("卡号不能为空",{time: 600});
+                    return false;
                 }
-                console.log(e.code);
+                let data = JSON.parse(await invoke("user_info", { card: card }));
+                if (data.length === 0) {
+                    layer.msg("没有找到会员",{time: 600});
+                    return false;
+                }
+                table.reload('userTable', {data: data});
+                indexChangeForm.attr("hidden", false);
+                scoreInput.val("");
+                scoreInput.trigger("focus");
+                if (indexCardTipsPanel !== undefined) {
+                    indexCardTipsPanel.attr("hidden", true);
+                }
+            }
+            $(document).on("click", "#search", function () {
+                getUser(form.val("index_user_form").card);
                 return false;
+            });
+            async function addScore(card, addScore) {
+                let data = await invoke("user_add_score", { card: card, addScore: Number(addScore) });
+                table.reload('userTable', {data: JSON.parse(data)});
+                indexChangeForm.attr("hidden", true);
+                indexCardInput.val("");
+                indexCardInput.trigger("focus");
+            }
+            $(document).on("click", "#addScore", function () {
+                let card = form.val("index_user_form").card;
+                if (card !== table.getData("userTable")[0].card) {
+                    layer.msg("输入框中卡号与查询结果中卡号不一致",{time: 600});
+                    return false;
+                }
+                let score = form.val("index_change_form").score;
+                if (Number(score) === 0) {
+                    layer.msg("积分不能为0",{time: 600});
+                    return false;
+                }
+                let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
+                let keyDown = document.onkeydown;
+                let addScoreAndCloseConfirm = function (confirmIndex) {
+                    document.onkeydown = keyDown;
+                    addScore(card, score);
+                    layer.close(confirmIndex);
+                };
+                let confirmIndex = layer.confirm(msg, {closeBtn: 0, title:"提示", }
+                    , addScoreAndCloseConfirm, function () {
+                        document.onkeydown = keyDown;
+                    });
+                document.onkeydown = function (e) {
+                    if (e.code === "NumpadEnter" || e.code === "Enter") {
+                        addScoreAndCloseConfirm(confirmIndex);
+                    } else if (e.code === "Escape") {
+                        layer.close(confirmIndex);
+                        document.onkeydown = keyDown;
+                    }
+                    return false;
+                };
+                return false;
+            });
+        })();
+        //用户管理逻辑
+        (function userManager() {
+            let userCardInput = $("input[name='userCard']");
+            table.render({elem: "#userList", toolbar: '#toolbaruserList'});
+            async function searchUser(card, name, phone) {
+                let data = await invoke("search_user", { card: card, name: name, phone:phone});
+                table.reload('userList', {data: JSON.parse(data)});
+            }
+            $(document).on("click", "#userSearch", function () {
+                let card = form.val("manager_user_form").manager_card;
+                let name = form.val("manager_user_form").manager_name;
+                let phone = form.val("manager_user_form").manager_phone;
+                searchUser(card, name, phone);
+                return false;
+            });
+            function openUserForm(isUpdate) {
+                userCardInput.attr("disabled", isUpdate);
+                let layerIndex = layer.open({
+                    type: 1,
+                    title: isUpdate ? "修改用户" : "新增用户",
+                    content: $("#userForm"),
+                    area: ['660px', '400px']
+                });
+            }
+            $(document).on("click", "#userAdd", function () {
+                let nextCard = invoke("next_card", {});
+                nextCard.then(cardId => {
+                    //清空表单数据,填充
+                    form.val("userForm", {isNew: true, userCard: cardId, userName:"", userPhone:"", userDress:"", userScore:"", userRemarks:""});
+                    openUserForm(false);
+                });
+            });
+            //监听工具条
+            table.on('tool(userList)', function(obj){
+                if(obj.event !== 'update'){
+                    return false;
+                }
+                let data = obj.data;
+                //回写表单数据
+                form.val("userForm", {isNew: false, userCard: data.card, userName: data.name, userPhone: data.phone,
+                    userDress: data.dress, userScore: data.score, userRemarks: data.remarks});
+                openUserForm(true);
+            });
+            async function submitUser(data) {
+                let result = JSON.parse(await invoke("submit_user", data));
+                if (result.code !== 0) {
+                    layer.alert(result.msg, {time: 5000});
+                    return;
+                }
+                searchUser(result.card, "", "");
+                layer.closeAll();
+                layer.msg("保存成功", {time: 1000})
+            }
+            $(document).on("click", "#userSubmit", function () {
+                if (!/^[0-9]+$/.test(form.val("userForm").userCard)) {
+                    layer.alert("卡号必须全是数字", {time: 3000});
+                    return false;
+                }
+                submitUser(form.val("userForm"));
+                return false;
+            });
+        })();
+        //首页卡号输入框提示
+        (function indexCardInputTips() {
+            //初演示 - 绑定输入框
+            let dropdownPanel = undefined;
+             dropdown.render({
+                elem: '#input_index_card'
+                ,trigger:"keyup"
+                ,data: {}
+                ,ready: function (elemPanel) {
+                     dropdownPanel = indexCardTipsPanel = elemPanel;
+                     dropdownPanel.attr("hidden", true);
+                 }
+                ,style: 'width: 190px;'
+            });
+            indexCardTipClick = function (param) {
+                indexCardInput.val(param);
+                dropdownPanel.attr("hidden", true);
+                indexCardInput.trigger("focus");
             };
-            return false;
-        });
-
+            indexCardInput.keyup(function (event) {
+                if (event.target.value.length < 2) {
+                    return false;
+                }
+                if (dropdownPanel !== undefined) {
+                    invoke("search_like", {filed: "card_id", param: event.target.value}).then(resultArr => {
+                        resultArr = JSON.parse(resultArr);
+                        if (resultArr.length === 0) {
+                            dropdownPanel.attr("hidden", true);
+                            return
+                        }
+                        let html = "";
+                        resultArr.forEach(result => {
+                            html = html + '<li><div class="layui-menu-body-title" onclick="indexCardTipClick(\''+result+'\')">'+ result +'</div></li>'
+                        });
+                        dropdownPanel.find(".layui-dropdown-menu").html(html);
+                        dropdownPanel.attr("hidden", false);
+                    });
+                }
+                return false;
+            });
+        })();
+        //用户管理卡号输入框提示
+        (function managerCardInputTips() {
+            //初演示 - 绑定输入框
+            let dropdownPanel = undefined;
+            dropdown.render({
+                elem: '#input_manager_card'
+                ,trigger:"keyup"
+                ,data: {}
+                ,ready: function (elemPanel) {
+                    dropdownPanel = elemPanel;
+                    dropdownPanel.attr("hidden", true);
+                }
+                ,style: 'width: 190px;'
+            });
+            managerCardTipClick = function (param) {
+                managerCardInput.val(param);
+                dropdownPanel.attr("hidden", true);
+                managerCardInput.trigger("focus");
+            };
+            managerCardInput.keyup(function (event) {
+                if (event.target.value.length < 2) {
+                    return false;
+                }
+                if (dropdownPanel !== undefined) {
+                    invoke("search_like", {filed: "card_id", param: event.target.value}).then(resultArr => {
+                        resultArr = JSON.parse(resultArr);
+                        if (resultArr.length === 0) {
+                            dropdownPanel.attr("hidden", true);
+                            return
+                        }
+                        let html = "";
+                        resultArr.forEach(result => {
+                            html = html + '<li><div class="layui-menu-body-title" onclick="managerCardTipClick(\''+result+'\')">'+ result +'</div></li>'
+                        });
+                        dropdownPanel.find(".layui-dropdown-menu").html(html);
+                        dropdownPanel.attr("hidden", false);
+                    });
+                }
+                return false;
+            });
+        })();
+        //用户管理姓名输入框提示
+        (function managerNameInputTips() {
+            //初演示 - 绑定输入框
+            let dropdownPanel = undefined;
+            dropdown.render({
+                elem: '#input_manager_name'
+                ,trigger:"keyup"
+                ,data: {}
+                ,ready: function (elemPanel) {
+                    dropdownPanel = elemPanel;
+                    dropdownPanel.attr("hidden", true);
+                }
+                ,style: 'width: 190px;'
+            });
+            managerNameTipClick = function (param) {
+                managerNameInput.val(param);
+                dropdownPanel.attr("hidden", true);
+                managerNameInput.trigger("focus");
+            };
+            managerNameInput.keyup(function (event) {
+                if (event.target.value.length < 1) {
+                    return false;
+                }
+                if (dropdownPanel !== undefined) {
+                    invoke("search_like", {filed: "name", param: event.target.value}).then(resultArr => {
+                        resultArr = JSON.parse(resultArr);
+                        if (resultArr.length === 0) {
+                            dropdownPanel.attr("hidden", true);
+                            return
+                        }
+                        let html = "";
+                        resultArr.forEach(result => {
+                            html = html + '<li><div class="layui-menu-body-title" onclick="managerNameTipClick(\''+result+'\')">'+ result +'</div></li>'
+                        });
+                        dropdownPanel.find(".layui-dropdown-menu").html(html);
+                        dropdownPanel.attr("hidden", false);
+                    });
+                }
+                return false;
+            });
+        })();
+        //用户管理电话入框提示
+        (function managerPhoneInputTips() {
+            //初演示 - 绑定输入框
+            let dropdownPanel = undefined;
+            dropdown.render({
+                elem: '#input_manager_phone'
+                ,trigger:"keyup"
+                ,data: {}
+                ,ready: function (elemPanel) {
+                    dropdownPanel = elemPanel;
+                    dropdownPanel.attr("hidden", true);
+                }
+                ,style: 'width: 190px;'
+            });
+            managerPhoneTipClick = function (param) {
+                managerPhoneInput.val(param);
+                dropdownPanel.attr("hidden", true);
+                managerPhoneInput.trigger("focus");
+            };
+            managerPhoneInput.keyup(function (event) {
+                if (event.target.value.length < 2) {
+                    return false;
+                }
+                if (dropdownPanel !== undefined) {
+                    invoke("search_like", {filed: "phone", param: event.target.value}).then(resultArr => {
+                        resultArr = JSON.parse(resultArr);
+                        if (resultArr.length === 0) {
+                            dropdownPanel.attr("hidden", true);
+                            return
+                        }
+                        let html = "";
+                        resultArr.forEach(result => {
+                            html = html + '<li><div class="layui-menu-body-title" onclick="managerPhoneTipClick(\''+result+'\')">'+ result +'</div></li>'
+                        });
+                        dropdownPanel.find(".layui-dropdown-menu").html(html);
+                        dropdownPanel.attr("hidden", false);
+                    });
+                }
+                return false;
+            });
+        })();
     });
 </script>
 
