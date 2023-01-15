@@ -286,7 +286,7 @@
                 result.forEach(data => {
                     data.create_time = new Date(data.create_time).toLocaleString();
                 });
-                table.reload('userList', {data: result});
+                table.reload('userList', {data: result, page:{hash:true}});
             }
             $(document).on("click", "#userSearch", function () {
                 let card = form.val("manager_user_form").manager_card;
@@ -356,7 +356,7 @@
                 result.forEach(data => {
                    data.operate_time = new Date(data.operate_time).toLocaleString();
                 });
-                table.reload('logList', {data: result});
+                table.reload('logList', {data: result, page:{hash:true}});
             }
             $(document).on("click", "#logSearch", function () {
                 searchLog(form.val("log_form"));
