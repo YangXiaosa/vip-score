@@ -49,7 +49,7 @@ fn user_info(card: &str) -> String {
 }
 
 #[tauri::command]
-fn user_add_score(card: &str, add_score: i32) -> String {
+fn user_add_score(card: &str, add_score: i32, operate_why: &str) -> String {
     let connection = sqlite::open(DB_PATH).unwrap();
     let query = format!("update users set score = score + {}, last_change = {} where card_id = '{}'", add_score, add_score, card);
     connection.execute(query).unwrap();
@@ -57,8 +57,8 @@ fn user_add_score(card: &str, add_score: i32) -> String {
     if !users.is_empty() {
         let now: DateTime<Local> = Local::now();
         let mills: i64 = now.timestamp_millis();
-        let log_sql = format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, name) values('{}','{}','{}',{},'{}')",
-                              card, "修改积分", format!("加{}分，总分:{}", add_score, users[0]["score"]), mills, users[0]["name"]);
+        let log_sql = format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}')",
+                              card, "修改积分", format!("加{}分，总分:{}", add_score, users[0]["score"]), mills, operate_why, users[0]["name"]);
         connection.execute(log_sql).unwrap();
     }
     return json::stringify(users);
@@ -86,7 +86,7 @@ fn search_user(card: &str, name: &str, phone: &str,) -> String {
 }
 
 #[tauri::command]
-fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &str, user_dress: &str, user_score: &str, user_remarks: &str) -> String {
+fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &str, user_dress: &str, user_score: &str, user_remarks: &str, operate_why: &str) -> String {
     let mut result = json::JsonValue::new_object();
     if user_card == "" {
         result["code"] = 500.into();
@@ -104,14 +104,21 @@ fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &str,
     }
     let now: DateTime<Local> = Local::now();
     let mills: i64 = now.timestamp_millis();
-    let query;
+    let mut query = String::from("");
     if is_new == "true" {
         query = format!("INSERT INTO users (card_id, name, score, last_change, phone, dress, remarks, create_time, update_time) VALUES ('{}', '{}', {}, 0, '{}', '{}', '{}', {}, {});"
                             , user_card, user_name, score, user_phone, user_dress, user_remarks, mills, mills);
     } else {
-        add_update_log(user_card, user_name, user_phone, user_dress, score, user_remarks, mills);
-        query = format!("update users set score={}, name='{}', phone='{}', dress='{}', remarks='{}', update_time={} where card_id='{}'"
+        let have_change = add_update_log(user_card, user_name, user_phone, user_dress, score, user_remarks, operate_why, mills);
+        if have_change {
+            query = format!("update users set score={}, name='{}', phone='{}', dress='{}', remarks='{}', update_time={} where card_id='{}'"
                             , score, user_name, user_phone, user_dress, user_remarks, mills, user_card);
+        }
+    }
+    if query == "" {
+        result["code"] = 500.into();
+        result["msg"] = "没有任何改动".into();
+        return json::stringify(result);
     }
     let connection = sqlite::open(DB_PATH).unwrap();
     let query_result = connection.execute(query);
@@ -129,15 +136,15 @@ fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &str,
     }
 }
 
-fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, remarks: &str, mills: i64) {
+fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, remarks: &str, operate_why: &str, mills: i64) -> bool{
     let users = get_user(card);
     if users.is_empty() {
-        return;
+        return false;
     }
     let mut log_sql = String::from("");
     if users[0]["score"] != score{
-        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, name) values('{}','{}','{}',{},'{}');",
-                              card, "修改积分", format!("总分：{} -> {}", users[0]["score"], score), mills, users[0]["name"]).as_str());
+        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
+                              card, "修改积分", format!("总分：{} -> {}", users[0]["score"], score), mills, operate_why, users[0]["name"]).as_str());
 
     }
     let mut change = String::from("");
@@ -145,7 +152,6 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, 
         change.push_str(format!("姓名：{} -> {} ", users[0]["name"], name).as_str());
     }
     if users[0]["phone"] != phone {
-        println!("phone:{},{}", users[0]["phone"], phone);
         change.push_str(format!("电话：{} -> {} ", users[0]["phone"], phone).as_str());
     }
     if users[0]["dress"] != dress {
@@ -155,10 +161,11 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, 
         change.push_str(format!("备注：{} -> {} ", users[0]["remarks"], remarks).as_str());
     }
     if change != "" {
-        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, name) values('{}','{}','{}',{},'{}');",
-                                 card, "修改用户信息", change, mills, users[0]["name"]).as_str());
+        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
+                                 card, "修改用户信息", change, mills, operate_why, users[0]["name"]).as_str());
     }
-    if log_sql != "" {
+    let have_change = log_sql != "";
+    if have_change {
         let connection = sqlite::open(DB_PATH).unwrap();
         let query_result = connection.execute(log_sql);
         match query_result {
@@ -168,6 +175,7 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, 
             }
         }
     }
+    return have_change;
 }
 
 #[tauri::command]
@@ -225,6 +233,7 @@ fn search_log(log_card: &str, log_start: i64, log_end: i64) -> String {
         data["operate_time"] = statement.read::<i64, _>("operate_time").unwrap().into();
         data["operate_type"] = statement.read::<String, _>("operate_type").unwrap().into();
         data["operate_info"] = statement.read::<String, _>("operate_info").unwrap().into();
+        data["operate_why"] = statement.read::<String, _>("operate_why").unwrap().into();
         result.push(data).unwrap();
     }
     return json::stringify(result);
@@ -263,7 +272,8 @@ fn init() {
                             operate_type text not null,
                             operate_info text not null,
                             operate_time bigint not null,
-                            name text default '' not null
+                            name text default '' not null,
+                            operate_why text default ''
                         )";
     connection.execute(query).unwrap();
 

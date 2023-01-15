@@ -126,6 +126,7 @@
                     <th lay-data="{field:'name', width:160}">姓名</th>
                     <th lay-data="{field:'operate_time', width:200}">时间</th>
                     <th lay-data="{field:'operate_type', width:200}">类型</th>
+                    <th lay-data="{field:'operate_why', width:200}">原因</th>
                     <th lay-data="{field:'operate_info'}">详情</th>
                 </tr></thead>
                 <tbody></tbody>
@@ -171,6 +172,14 @@
                         <label class="layui-form-label">备注</label>
                         <div class="layui-input-inline">
                             <input type="text" name="userRemarks" autocomplete="off" class="layui-input" >
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item" id = "operate_why_line" hidden>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">修改原因</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="operateWhy" autocomplete="off" class="layui-input" >
                         </div>
                     </div>
                 </div>
@@ -227,8 +236,9 @@
                 getUser(form.val("index_user_form").card);
                 return false;
             });
-            async function addScore(card, addScore) {
-                let data = await invoke("user_add_score", { card: card, addScore: Number(addScore) });
+            async function addScore(card, addScore, operateWhy) {
+                operateWhy = operateWhy === "原因：可不填" ? "" : operateWhy;
+                let data = await invoke("user_add_score", { card: card, addScore: Number(addScore), operateWhy: operateWhy});
                 table.reload('userTable', {data: JSON.parse(data)});
                 indexChangeForm.attr("hidden", true);
                 indexCardInput.val("");
@@ -247,23 +257,23 @@
                 }
                 let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
                 let keyDown = document.onkeydown;
-                let addScoreAndCloseConfirm = function (confirmIndex) {
+                let addScoreAndCloseConfirm = function (operateWhy, layerIndex) {
                     document.onkeydown = keyDown;
-                    addScore(card, score);
-                    layer.close(confirmIndex);
+                    addScore(card, score, operateWhy);
+                    layer.close(layerIndex);
                 };
-                let confirmIndex = layer.confirm(msg, {closeBtn: 0, title:"提示", }
-                    , addScoreAndCloseConfirm, function () {
-                        document.onkeydown = keyDown;
-                    });
+                let promptIndex = layer.prompt({closeBtn: 0, title: msg, value:"原因：可不填"},
+                    addScoreAndCloseConfirm, function () {
+                    document.onkeydown = keyDown;
+                });
                 document.onkeydown = function (e) {
                     if (e.code === "NumpadEnter" || e.code === "Enter") {
-                        addScoreAndCloseConfirm(confirmIndex);
+                        let operateWhy = $("#layui-layer" + promptIndex).find("input").val()
+                        addScoreAndCloseConfirm(operateWhy, promptIndex);
                     } else if (e.code === "Escape") {
-                        layer.close(confirmIndex);
+                        layer.close(promptIndex);
                         document.onkeydown = keyDown;
                     }
-                    return false;
                 };
                 return false;
             });
@@ -271,6 +281,7 @@
         //用户管理逻辑
         (function userManager() {
             let userCardInput = $("input[name='userCard']");
+            let whyUpdateLine = $("#operate_why_line");
             table.render({elem: "#userList", toolbar: '#toolbaruserList'});
             async function searchUser(card, name, phone) {
                 let result = JSON.parse(await invoke("search_user", { card: card, name: name, phone:phone}));
@@ -288,6 +299,7 @@
             });
             function openUserForm(isUpdate) {
                 userCardInput.attr("disabled", isUpdate);
+                whyUpdateLine.attr("hidden", !isUpdate);
                 let layerIndex = layer.open({
                     type: 1,
                     title: isUpdate ? "修改用户" : "新增用户",
@@ -299,7 +311,7 @@
                 let nextCard = invoke("next_card", {});
                 nextCard.then(cardId => {
                     //清空表单数据,填充
-                    form.val("userForm", {isNew: true, userCard: cardId, userName:"", userPhone:"", userDress:"", userScore:"", userRemarks:""});
+                    form.val("userForm", {isNew: true, userCard: cardId, userName:"", userPhone:"", userDress:"", userScore:"", userRemarks:"", operateWhy:""});
                     openUserForm(false);
                 });
             });
@@ -311,7 +323,7 @@
                 let data = obj.data;
                 //回写表单数据
                 form.val("userForm", {isNew: false, userCard: data.card, userName: data.name, userPhone: data.phone,
-                    userDress: data.dress, userScore: data.score, userRemarks: data.remarks});
+                    userDress: data.dress, userScore: data.score, userRemarks: data.remarks, operateWhy:""});
                 openUserForm(true);
             });
             async function submitUser(data) {
