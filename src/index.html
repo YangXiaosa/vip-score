@@ -13,6 +13,7 @@
     <ul class="layui-tab-title">
         <li class="layui-this">首页</li>
         <li>用户管理</li>
+        <li>操作日志</li>
     </ul>
     <div class="layui-tab-content">
         <div class="layui-tab-item layui-show">
@@ -85,12 +86,50 @@
                         <th lay-data="{field:'last_change', width:150}">最近修改</th>
                         <th lay-data="{field:'phone', width:150}">电话</th>
                         <th lay-data="{field:'dress', width:200}">住址</th>
-                        <th lay-data="{field:'remarks', width:200}">备注</th>
+                        <th lay-data="{field:'create_time', width:200}">开户时间</th>
+                        <th lay-data="{field:'remarks', width:400}">备注</th>
                         <th lay-data="{fixed: 'right', align:'center', toolbar: '#toolbarUserList'}"></th>
                     </tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
+        <div class="layui-tab-item">
+            <div class="layui-form">
+                <form class="layui-form" action="" lay-filter="log_form">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">卡号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="logCard" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">开始日期</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="logStart" id="logStart" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">截止日期</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="logEnd" id="logEnd" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <button id="logSearch" class="layui-btn">查询</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <table class="layui-table" lay-data="{page:true, id:'logList'}" lay-filter="logList">
+                <thead><tr>
+                    <th lay-data="{field:'card', width:160}">卡号</th>
+                    <th lay-data="{field:'name', width:160}">姓名</th>
+                    <th lay-data="{field:'operate_time', width:200}">时间</th>
+                    <th lay-data="{field:'operate_type', width:200}">类型</th>
+                    <th lay-data="{field:'operate_info'}">详情</th>
+                </tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -158,6 +197,7 @@
         const managerCardInput = $("#input_manager_card");
         const managerNameInput = $("#input_manager_name");
         const managerPhoneInput = $("#input_manager_phone");
+        const laydate = layui.laydate;
         let indexCardTipsPanel = undefined;
         //首页逻辑
         (function index() {
@@ -233,8 +273,11 @@
             let userCardInput = $("input[name='userCard']");
             table.render({elem: "#userList", toolbar: '#toolbaruserList'});
             async function searchUser(card, name, phone) {
-                let data = await invoke("search_user", { card: card, name: name, phone:phone});
-                table.reload('userList', {data: JSON.parse(data)});
+                let result = JSON.parse(await invoke("search_user", { card: card, name: name, phone:phone}));
+                result.forEach(data => {
+                    data.create_time = new Date(data.create_time).toLocaleString();
+                });
+                table.reload('userList', {data: result});
             }
             $(document).on("click", "#userSearch", function () {
                 let card = form.val("manager_user_form").manager_card;
@@ -287,6 +330,26 @@
                     return false;
                 }
                 submitUser(form.val("userForm"));
+                return false;
+            });
+        })();
+        //操作日志逻辑
+        (function operateLog() {
+            laydate.render({elem: '#logStart'});
+            laydate.render({elem: '#logEnd'});
+            table.render({elem: "#logList"});
+            async function searchLog(param) {
+                let logStart = param.logStart, logEnd = param.logEnd;
+                param.logStart = logStart === "" ? 0 : new Date(logStart + " 00:00:00").getTime();
+                param.logEnd = logEnd === "" ? 0 : new Date(logEnd + " 23:59:59").getTime();
+                let result = JSON.parse(await invoke("search_log", param));
+                result.forEach(data => {
+                   data.operate_time = new Date(data.operate_time).toLocaleString();
+                });
+                table.reload('logList', {data: result});
+            }
+            $(document).on("click", "#logSearch", function () {
+                searchLog(form.val("log_form"));
                 return false;
             });
         })();
