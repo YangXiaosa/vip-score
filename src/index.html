@@ -262,17 +262,15 @@
                     addScore(card, score, operateWhy);
                     layer.close(layerIndex);
                 };
-                let promptIndex = layer.prompt({closeBtn: 0, title: msg, value:"原因：可不填"},
-                    addScoreAndCloseConfirm, function () {
-                    document.onkeydown = keyDown;
-                });
+                let promptIndex = layer.prompt({closeBtn: 0, title: msg, value:"原因：可不填"}, addScoreAndCloseConfirm);
                 document.onkeydown = function (e) {
                     if (e.code === "NumpadEnter" || e.code === "Enter") {
-                        let operateWhy = $("#layui-layer" + promptIndex).find("input").val()
+                        let operateWhy = $("#layui-layer" + promptIndex).find("input").val();
                         addScoreAndCloseConfirm(operateWhy, promptIndex);
                     } else if (e.code === "Escape") {
                         layer.close(promptIndex);
                         document.onkeydown = keyDown;
+                        indexCardInput.trigger("focus");
                     }
                 };
                 return false;
