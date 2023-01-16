@@ -68,7 +68,7 @@ fn user_add_score(card: &str, add_score: i32, operate_why: &str) -> String {
 fn search_user(card: &str, name: &str, phone: &str,) -> String {
     let mut query = String::from("SELECT * FROM users WHERE 1 = 1");
     if card != "" {
-        query.push_str(&format!(" and card_id = '{}'", card));
+        query.push_str(&format!(" and card_id like '%{}%'", card));
     }
     if name != "" {
         query.push_str(&format!(" and name like '%{}%'", name));
@@ -200,7 +200,7 @@ fn next_card() -> String {
 #[tauri::command]
 fn search_like(filed: &str, param: &str) -> String {
     let connection = sqlite::open(DB_PATH).unwrap();
-    let query = format!("SELECT distinct {} FROM users WHERE {} like '%{}%'", filed, filed, param);
+    let query = format!("SELECT distinct {} FROM users WHERE {} like '%{}%' limit 10", filed, filed, param);
     let mut statement = connection.prepare(query).unwrap();
     let mut result = json::JsonValue::new_array();
     while let Ok(State::Row) = statement.next() {

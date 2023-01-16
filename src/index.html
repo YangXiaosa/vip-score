@@ -283,6 +283,10 @@
             table.render({elem: "#userList", toolbar: '#toolbaruserList'});
             async function searchUser(card, name, phone) {
                 let result = JSON.parse(await invoke("search_user", { card: card, name: name, phone:phone}));
+                if (result.length === 0) {
+                    layer.msg("没有找到数据", {time: 2000});
+                    return;
+                }
                 result.forEach(data => {
                     data.create_time = new Date(data.create_time).toLocaleString();
                 });
@@ -353,6 +357,10 @@
                 param.logStart = logStart === "" ? 0 : new Date(logStart + " 00:00:00").getTime();
                 param.logEnd = logEnd === "" ? 0 : new Date(logEnd + " 23:59:59").getTime();
                 let result = JSON.parse(await invoke("search_log", param));
+                if (result.length === 0) {
+                    layer.msg("没有找到数据", {time: 2000});
+                    return;
+                }
                 result.forEach(data => {
                    data.operate_time = new Date(data.operate_time).toLocaleString();
                 });
