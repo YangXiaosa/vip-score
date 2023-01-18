@@ -258,8 +258,8 @@
                         return false;
                     }
                     let score = form.val("index_change_form").score;
-                    if (Number(score) === 0) {
-                        layer.msg("积分不能为0",{time: 600});
+                    if (!/^[-,1-9]{1}[0-9]*$/.test(score)) {
+                        layer.msg("积分不能为0且必须是数字", {time: 3000});
                         return false;
                     }
                     let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
@@ -282,8 +282,9 @@
                     };
                 } catch (e) {
                     console.log(e);
+                } finally {
+                    addScoreLock = false;
                 }
-                addScoreLock = false;
                 return false;
             });
         })();
@@ -355,15 +356,20 @@
                     }
                     submitUserLock = true;
                     if (!/^[0-9]+$/.test(form.val("userForm").userCard)) {
-                        layer.alert("卡号必须全是数字", {time: 3000});
+                        layer.msg("卡号必须全是数字", {time: 3000});
+                        return false;
+                    }
+                    if (!/^[0-9]*$/.test(form.val("userForm").userScore)) {
+                        layer.msg("积分必须是数字且不小于0", {time: 3000});
                         return false;
                     }
                     layer.closeAll();
                     submitUser(form.val("userForm"));
                 } catch (e) {
                     console.log(e);
+                } finally {
+                    submitUserLock = false;
                 }
-                submitUserLock = false;
                 return false;
             });
         })();
