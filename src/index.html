@@ -165,21 +165,17 @@
                 </div>
                 <div class="layui-form-item">
                     <div class="layui-inline">
-                        <label class="layui-form-label">积分</label>
-                        <div class="layui-input-inline">
-                            <input type="text" name="userScore" autocomplete="off" class="layui-input" >
-                        </div>
                         <label class="layui-form-label">备注</label>
                         <div class="layui-input-inline">
                             <input type="text" name="userRemarks" autocomplete="off" class="layui-input" >
                         </div>
-                    </div>
-                </div>
-                <div class="layui-form-item" id = "operate_why_line" hidden>
-                    <div class="layui-inline">
-                        <label class="layui-form-label">修改原因</label>
-                        <div class="layui-input-inline">
-                            <input type="text" name="operateWhy" autocomplete="off" class="layui-input" >
+                        <label class="layui-form-label user_score_flag">积分</label>
+                        <div class="layui-input-inline user_score_flag">
+                            <input type="text" name="userScore" autocomplete="off" class="layui-input" >
+                        </div>
+                        <label class="layui-form-label user_update_why_flag">原因</label>
+                        <div class="layui-input-inline user_update_why_flag">
+                            <input type="text" name="operateWhy" autocomplete="off" class="layui-input" placeholder="修改会员信息的原因">
                         </div>
                     </div>
                 </div>
@@ -291,7 +287,8 @@
         //用户管理逻辑
         (function userManager() {
             let userCardInput = $("input[name='userCard']");
-            let whyUpdateLine = $("#operate_why_line");
+            let whyUpdateLine = $(".user_update_why_flag");
+            let userScoreLine = $(".user_score_flag");
             table.render({elem: "#userList", toolbar: '#toolbaruserList'});
             async function searchUser(card, name, phone) {
                 let result = JSON.parse(await invoke("search_user", { card: card, name: name, phone:phone}));
@@ -313,8 +310,9 @@
             });
             function openUserForm(isUpdate) {
                 userCardInput.attr("disabled", isUpdate);
-                whyUpdateLine.attr("hidden", !isUpdate);
-                let layerIndex = layer.open({
+                whyUpdateLine.css("display", isUpdate ? "" : "none");
+                userScoreLine.css("display", isUpdate ? "none" : "");
+                layer.open({
                     type: 1,
                     title: isUpdate ? "修改用户" : "新增用户",
                     content: $("#userForm"),

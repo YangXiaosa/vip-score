@@ -6,16 +6,10 @@ use sqlite::{State, Statement, Connection};
 use chrono::{DateTime, Local};
 use crate::my_db;
 
-fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, remarks: &str, operate_why: &str, mills: i64) -> bool{
+fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, remarks: &str, operate_why: &str, mills: i64) -> bool{
     let users = get_user(card);
     if users.is_empty() {
         return false;
-    }
-    let mut log_sql = String::from("");
-    if users[0]["score"] != score{
-        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
-                                 card, "修改积分", format!("总分：{} -> {}", users[0]["score"], score), mills, operate_why, users[0]["name"]).as_str());
-
     }
     let mut change = String::from("");
     if users[0]["name"] != name {
@@ -30,22 +24,20 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, score: i32, 
     if users[0]["remarks"] != remarks {
         change.push_str(format!("备注：{} -> {} ", users[0]["remarks"], remarks).as_str());
     }
-    if change != "" {
-        log_sql.push_str(format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
-                                 card, "修改用户信息", change, mills, operate_why, users[0]["name"]).as_str());
+    if change == "" {
+        return false;
     }
-    let have_change = log_sql != "";
-    if have_change {
-        let connection = my_db::get_con();
-        let query_result = connection.execute(log_sql);
-        match query_result {
-            Result::Ok(_) => {}
-            Result::Err(error) => {
-                println!("sql error code:{}, msg:{}", json::stringify(error.code), json::stringify(error.message));
-            }
+    let log_sql = format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
+            card, "修改用户信息", change, mills, operate_why, users[0]["name"]);
+    let connection = my_db::get_con();
+    let query_result = connection.execute(&log_sql);
+    match query_result {
+        Result::Ok(_) => {}
+        Result::Err(error) => {
+            println!("sql error code:{}, msg:{}", json::stringify(error.code), json::stringify(error.message));
         }
     }
-    return have_change;
+    return true;
 }
 
 fn parse_to_user(statement: &sqlite::Statement) -> json::JsonValue {
@@ -157,10 +149,10 @@ pub fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &
         query = format!("INSERT INTO users (card_id, name, score, last_change, phone, dress, remarks, create_time, update_time) VALUES ('{}', '{}', {}, 0, '{}', '{}', '{}', {}, {});"
                         , user_card, user_name, score, user_phone, user_dress, user_remarks, mills, mills);
     } else {
-        let have_change = add_update_log(user_card, user_name, user_phone, user_dress, score, user_remarks, operate_why, mills);
+        let have_change = add_update_log(user_card, user_name, user_phone, user_dress, user_remarks, operate_why, mills);
         if have_change {
-            query = format!("update users set score={}, name='{}', phone='{}', dress='{}', remarks='{}', update_time={} where card_id='{}'"
-                            , score, user_name, user_phone, user_dress, user_remarks, mills, user_card);
+            query = format!("update users set name='{}', phone='{}', dress='{}', remarks='{}', update_time={} where card_id='{}'"
+                            , user_name, user_phone, user_dress, user_remarks, mills, user_card);
         }
     }
     if query == "" {
