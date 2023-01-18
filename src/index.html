@@ -208,6 +208,8 @@
         const managerPhoneInput = $("#input_manager_phone");
         const laydate = layui.laydate;
         let indexCardTipsPanel = undefined;
+        let addScoreLock = false;
+        let submitUserLock = false;
         //首页逻辑
         (function index() {
             let indexChangeForm = $("form[lay-filter='index_change_form']");
@@ -245,34 +247,43 @@
                 indexCardInput.trigger("focus");
             }
             $(document).on("click", "#addScore", function () {
-                let card = form.val("index_user_form").card;
-                if (card !== table.getData("userTable")[0].card) {
-                    layer.msg("输入框中卡号与查询结果中卡号不一致",{time: 600});
-                    return false;
-                }
-                let score = form.val("index_change_form").score;
-                if (Number(score) === 0) {
-                    layer.msg("积分不能为0",{time: 600});
-                    return false;
-                }
-                let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
-                let keyDown = document.onkeydown;
-                let addScoreAndCloseConfirm = function (operateWhy, layerIndex) {
-                    document.onkeydown = keyDown;
-                    addScore(card, score, operateWhy);
-                    layer.close(layerIndex);
-                };
-                let promptIndex = layer.prompt({closeBtn: 0, title: msg, value:"原因：可不填"}, addScoreAndCloseConfirm);
-                document.onkeydown = function (e) {
-                    if (e.code === "NumpadEnter" || e.code === "Enter") {
-                        let operateWhy = $("#layui-layer" + promptIndex).find("input").val();
-                        addScoreAndCloseConfirm(operateWhy, promptIndex);
-                    } else if (e.code === "Escape") {
-                        layer.close(promptIndex);
-                        document.onkeydown = keyDown;
-                        indexCardInput.trigger("focus");
+                try {
+                    if (addScoreLock) {
+                        return false;
                     }
-                };
+                    addScoreLock = true;
+                    let card = form.val("index_user_form").card;
+                    if (card !== table.getData("userTable")[0].card) {
+                        layer.msg("输入框中卡号与查询结果中卡号不一致",{time: 600});
+                        return false;
+                    }
+                    let score = form.val("index_change_form").score;
+                    if (Number(score) === 0) {
+                        layer.msg("积分不能为0",{time: 600});
+                        return false;
+                    }
+                    let msg = "给 '"+ table.getData("userTable")[0].name +"' 加 '"+ score +"' 分吗？";
+                    let keyDown = document.onkeydown;
+                    let addScoreAndCloseConfirm = function (operateWhy, layerIndex) {
+                        document.onkeydown = keyDown;
+                        layer.close(layerIndex);
+                        addScore(card, score, operateWhy);
+                    };
+                    let promptIndex = layer.prompt({closeBtn: 0, title: msg, value:"原因：可不填"}, addScoreAndCloseConfirm);
+                    document.onkeydown = function (e) {
+                        if (e.code === "NumpadEnter" || e.code === "Enter") {
+                            let operateWhy = $("#layui-layer" + promptIndex).find("input").val();
+                            addScoreAndCloseConfirm(operateWhy, promptIndex);
+                        } else if (e.code === "Escape") {
+                            layer.close(promptIndex);
+                            document.onkeydown = keyDown;
+                            indexCardInput.trigger("focus");
+                        }
+                    };
+                } catch (e) {
+                    console.log(e);
+                }
+                addScoreLock = false;
                 return false;
             });
         })();
@@ -335,15 +346,24 @@
                     return;
                 }
                 searchUser(result.card, "", "");
-                layer.closeAll();
                 layer.msg("保存成功", {time: 1000})
             }
             $(document).on("click", "#userSubmit", function () {
-                if (!/^[0-9]+$/.test(form.val("userForm").userCard)) {
-                    layer.alert("卡号必须全是数字", {time: 3000});
-                    return false;
+                try {
+                    if (submitUserLock) {
+                        return false;
+                    }
+                    submitUserLock = true;
+                    if (!/^[0-9]+$/.test(form.val("userForm").userCard)) {
+                        layer.alert("卡号必须全是数字", {time: 3000});
+                        return false;
+                    }
+                    layer.closeAll();
+                    submitUser(form.val("userForm"));
+                } catch (e) {
+                    console.log(e);
                 }
-                submitUser(form.val("userForm"));
+                submitUserLock = false;
                 return false;
             });
         })();
