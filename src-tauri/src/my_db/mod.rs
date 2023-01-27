@@ -7,10 +7,11 @@ use crate::my_http_client;
 use crate::my_config;
 
 static DB_DIR:&str = "./data";
-pub static DB_FILE:&str = "./data/user.db";
+pub static DB_USER_FILE:&str = "./data/user.db";
+pub static DB_NO_BAK_FILE:&str = "./data/no_bak.db";
 
 pub fn init_db() {
-    let query = "CREATE TABLE IF NOT EXISTS users
+    let user_db_create = "CREATE TABLE IF NOT EXISTS users
                         (
                             card_id text not null
                                 constraint users_pk
@@ -43,12 +44,24 @@ pub fn init_db() {
                                     primary key,
                             value text default '' not null
                         );";
+    let no_bak_db_create =
+        "CREATE TABLE IF NOT EXISTS public_record
+        (
+            key text
+                constraint config_pk
+                    primary key,
+            value text default '' not null
+        );";
     fs::create_dir_all(DB_DIR).or_else(|error| {
         log::error!("create db dir error:{}", error);
         return Err(error);
     }).unwrap();
-    get_con().execute(query).or_else(|error| {
-        log::error!("execute create db sql error:{}", error);
+    get_user_con().execute(user_db_create).or_else(|error| {
+        log::error!("execute create user db sql error:{}", error);
+        return Err(error);
+    }).unwrap();
+    get_no_bak_con().execute(no_bak_db_create).or_else(|error| {
+        log::error!("execute create no bak db sql error:{}", error);
         return Err(error);
     }).unwrap();
     my_config::init_db_config();
@@ -56,13 +69,17 @@ pub fn init_db() {
     log::info!("db init success!!!");
 }
 
-pub fn get_con() -> sqlite::Connection{
-    return sqlite::open(DB_FILE).unwrap();
+pub fn get_user_con() -> sqlite::Connection{
+    return sqlite::open(DB_USER_FILE).unwrap();
+}
+
+pub fn get_no_bak_con() -> sqlite::Connection{
+    return sqlite::open(DB_NO_BAK_FILE).unwrap();
 }
 
 pub fn db_backup() {
     //获取修改时间
-    let modifi_time = fs::metadata(DB_FILE)
+    let modifi_time = fs::metadata(DB_USER_FILE)
     .and_then(|meta| meta.modified())
     .map(|time| Some(time))
     .unwrap_or_else(|error| {
@@ -96,7 +113,7 @@ pub fn db_backup() {
             let error_info = format!("{:?}", error);
             log::info!("sync db file, because: {}", error_info);
             let result = fs::OpenOptions::new().create_new(true).write(true).open(&backup_path)
-            .and_then(|_| fs::copy(DB_FILE, &backup_path));
+            .and_then(|_| fs::copy(DB_USER_FILE, &backup_path));
             if result.is_err() {
                 log::error!("copy db backup file error:{:?}", result.err());
                 return;

@@ -106,13 +106,19 @@
                             <div class="layui-inline">
                                 <label class="layui-form-label">开始日期</label>
                                 <div class="layui-input-inline">
-                                    <input type="text" name="logStart" id="logStart" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                                    <input type="text" name="logStart" id="logStart" lay-verify="date" placeholder="年-月-日" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <div class="layui-inline">
                                 <label class="layui-form-label">截止日期</label>
                                 <div class="layui-input-inline">
-                                    <input type="text" name="logEnd" id="logEnd" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                                    <input type="text" name="logEnd" id="logEnd" lay-verify="date" placeholder="年-月-日" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">数量</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="logCount" placeholder="查询条数-默认为100" autocomplete="off" class="layui-input">
                                 </div>
                             </div>
                             <button id="logSearch" class="layui-btn">查询</button>
@@ -377,9 +383,10 @@
             laydate.render({elem: '#logEnd'});
             table.render({elem: "#logList"});
             async function searchLog(param) {
-                let logStart = param.logStart, logEnd = param.logEnd;
+                let logStart = param.logStart, logEnd = param.logEnd, logCount = param.logCount;
                 param.logStart = logStart === "" ? 0 : new Date(logStart + " 00:00:00").getTime();
                 param.logEnd = logEnd === "" ? 0 : new Date(logEnd + " 23:59:59").getTime();
+                param.logCount = logCount === "" ? 100 : Number(logCount);
                 let result = JSON.parse(await invoke("search_log", param));
                 if (result.length === 0) {
                     layer.msg("没有找到数据", {time: 2000});

@@ -29,12 +29,12 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, remarks: &st
     }
     let log_sql = format!("insert into user_operate_log(card_id, operate_type, operate_info, operate_time, operate_why, name) values('{}','{}','{}',{},'{}','{}');",
             card, "修改用户信息", change, mills, operate_why, users[0]["name"]);
-    let connection = my_db::get_con();
+    let connection = my_db::get_user_con();
     let query_result = connection.execute(&log_sql);
     match query_result {
         Result::Ok(_) => {}
         Result::Err(error) => {
-            println!("sql error code:{}, msg:{}", json::stringify(error.code), json::stringify(error.message));
+            println!("sql error sql:{}, code:{}, msg:{}", log_sql, json::stringify(error.code), json::stringify(error.message));
         }
     }
     return true;
@@ -59,7 +59,7 @@ fn parse_to_user(statement: &sqlite::Statement) -> json::JsonValue {
 
 fn get_user(card: &str) -> json::JsonValue{
     let query = String::from("SELECT * FROM users WHERE card_id = ?");
-    return get_statement(&query, &my_db::get_con()).map_or(json::JsonValue::new_array(), |mut statement| {
+    return get_statement(&query, &my_db::get_user_con()).map_or(json::JsonValue::new_array(), |mut statement| {
         let result = statement.bind((1, card));
         if result.is_err() {
             log::error!("get user statement bind failed card_id:{}, error:{:?}", card, result.err());
@@ -80,7 +80,7 @@ pub fn user_info(card: &str) -> String {
 
 #[tauri::command]
 pub fn user_add_score(card: &str, add_score: i32, operate_why: &str) -> String {
-    let connection = my_db::get_con();
+    let connection = my_db::get_user_con();
     let query = format!("update users set score = score + {}, last_change = {} where card_id = '{}'", add_score, add_score, card);
     let add_score_result = connection.execute(&query);
     let add_success = add_score_result.is_ok();
@@ -110,7 +110,7 @@ pub fn search_user(card: &str, name: &str, phone: &str,) -> String {
     if phone != "" {
         query.push_str(&format!(" and phone like '%{}%'", phone));
     }
-    return get_statement(&query, &my_db::get_con()).map_or(String::from("[]"), |mut statement| {
+    return get_statement(&query, &my_db::get_user_con()).map_or(String::from("[]"), |mut statement| {
         let mut result = json::JsonValue::new_array();
         while let Ok(State::Row) = statement.next() {
             result.push(parse_to_user(&statement)).unwrap();
@@ -161,7 +161,7 @@ pub fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &
         return json::stringify(result);
     }
     log::info!("submit user sql : {}", query);
-    let connection = my_db::get_con();
+    let connection = my_db::get_user_con();
     let query_result = connection.execute(query);
     return match query_result {
         Result::Ok(_) => {
@@ -183,7 +183,7 @@ pub fn submit_user(is_new: &str, user_card: &str, user_name: &str, user_phone: &
 #[tauri::command]
 pub fn next_card() -> String {
     let query = String::from("SELECT card_id FROM users WHERE card_id like '0%'");
-    return get_statement(&query, &my_db::get_con()).map_or_else(|| Local::now().timestamp().to_string(), |mut statement| {
+    return get_statement(&query, &my_db::get_user_con()).map_or_else(|| Local::now().timestamp().to_string(), |mut statement| {
         let mut max_card = 0;
         while let Ok(State::Row) = statement.next() {
             let result = statement.read::<String, _>("card_id");
@@ -210,7 +210,7 @@ pub fn next_card() -> String {
 #[tauri::command]
 pub fn search_like(filed: &str, param: &str) -> String {
     let query = format!("SELECT distinct {} FROM users WHERE {} like '%{}%' limit 10", filed, filed, param);
-    return get_statement(&query, &my_db::get_con()).map_or(String::from("[]"), |mut statement| {
+    return get_statement(&query, &my_db::get_user_con()).map_or(String::from("[]"), |mut statement| {
         let mut result = json::JsonValue::new_array();
         while let Ok(State::Row) = statement.next() {
             let element = statement.read::<String, _>(filed).unwrap();
@@ -221,7 +221,7 @@ pub fn search_like(filed: &str, param: &str) -> String {
 }
 
 #[tauri::command]
-pub fn search_log(log_card: &str, log_start: i64, log_end: i64) -> String {
+pub fn search_log(log_card: &str, log_start: i64, log_end: i64, log_count: i64) -> String {
     let mut query = String::from("SELECT * FROM user_operate_log WHERE 1 = 1");
     if log_card != "" {
         query.push_str(format!(" and card_id = '{}'", log_card).as_str());
@@ -232,8 +232,8 @@ pub fn search_log(log_card: &str, log_start: i64, log_end: i64) -> String {
     if log_end > 0 {
         query.push_str(format!(" and operate_time <= {}", log_end).as_str());
     }
-    query.push_str(" order by operate_time desc;");
-    return get_statement(&query, &my_db::get_con()).map_or(String::from("[]"), |mut statement| {
+    query.push_str(format!(" order by operate_time desc limit {};", log_count).as_str());
+    return get_statement(&query, &my_db::get_user_con()).map_or(String::from("[]"), |mut statement| {
         let mut result = json::JsonValue::new_array();
         let mut error_info = String::from("");
         while let Ok(State::Row) = statement.next() {

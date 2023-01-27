@@ -14,6 +14,11 @@ static BAI_DU_WANG_PAN_REFRESH_TOKEN:&str = "bai_du_wang_pan_refresh_token";
 static BAI_DU_WANG_PAN_ACCESS_TOKEN:&str = "bai_du_wang_pan_access_token";
 static BAI_DU_WANG_PAN_ACCESS_TOKEN_END_TIME:&str = "bai_du_wang_pan_access_token_end_time";
 static DB_BACKUP_DIR:&str = "db_backup_dir";
+static ADMIN_MAIL:&str = "admin_email";
+static ADMIN_EMAIL_PASSWORD:&str = "admin_email_password";
+static ADMIN_EMAIL_SERVER:&str = "admin_email_server";
+static MERCHANT_NAME:&str = "merchant_name";
+
 
 //百度网盘刷新ACCESS_TOKEN的url
 static BAI_DU_WANG_PAN_REFRESH_TOKEN_URL:&str = "https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token";
@@ -24,10 +29,11 @@ pub static BAI_DU_WANG_PAN_UPLOAD_SHARD_URL:&str = "https://d.pcs.baidu.com/rest
 //百度网盘文件分片合成url
 pub static BAI_DU_WANG_PAN_CREATE_FILE_URL:&str = "https://pan.baidu.com/rest/2.0/xpan/file?method=create";
 
+//数据库中的配置缓存
 static mut DB_CONFIG:Lazy<json::JsonValue> = Lazy::new(|| { return json::JsonValue::new_object(); });
 
 pub fn init_db_config() {
-    let con = my_db::get_con();
+    let con = my_db::get_user_con();
     let mut statement = con.prepare("select * from config").or_else(|error| {
         log::error!("select * from config error:{}", error);
         return Err(error);
@@ -74,7 +80,7 @@ fn refresh_access_token() -> &'static str{
     let access_token_end_time = now_second + expires_in;
     let refresh_token = result["refresh_token"].as_str().unwrap_or("");
     let access_token = result["access_token"].as_str().unwrap_or("");
-    let con = my_db::get_con();
+    let con = my_db::get_user_con();
     let sql = format!("replace into config(key, value) values('{}','{}'),('{}','{}'),('{}','{}')",
                       BAI_DU_WANG_PAN_ACCESS_TOKEN_END_TIME, access_token_end_time,
                       BAI_DU_WANG_PAN_REFRESH_TOKEN, refresh_token,
@@ -100,6 +106,22 @@ pub fn get_db_backup_dir() -> &'static str{
         return db_backup_dir;
     }
     return "./backup/BaiduSyncdisk/supermarket";
+}
+//获取管理员邮箱
+pub fn get_admin_email() -> &'static str{
+    return get_config_str(ADMIN_MAIL);
+}
+//获取管理员邮箱的授权密码
+pub fn get_admin_email_password() -> &'static str{
+    return get_config_str(ADMIN_EMAIL_PASSWORD);
+}
+//获取管理员邮箱的服务器
+pub fn get_admin_email_server() -> &'static str{
+    return get_config_str(ADMIN_EMAIL_SERVER);
+}
+//获取商户名称
+pub fn get_merchant_name() -> &'static str{
+    return get_config_str(MERCHANT_NAME);
 }
 
 fn get_config_str(key: &str) -> &str {
