@@ -30,7 +30,7 @@ fn email_schedule() {
     let schedule = Schedule::from_str(expression).unwrap();
     for datetime in schedule.upcoming(Local) {
         let wait_time = (datetime.timestamp_millis() - Local::now().timestamp_millis()) as u64;
-        log::info!("next sync db file time:{}, wait_time:{}", datetime, wait_time);
+        log::info!("next send error log to email time:{}, wait_time:{}", datetime, wait_time);
         thread::sleep(Duration::from_millis(wait_time));
         my_log::error_send_mail();
     }

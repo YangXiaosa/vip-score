@@ -94,7 +94,7 @@ pub fn error_send_mail() {
           let mut buf = String::new();
           let mut num_bytes = 0;
           let mut log_time = String::from("");
-          while true{
+          loop {
             let read_result = cursor.read_line(&mut buf);
             if read_result.is_err() {
                 log::error!("read error log file failed, num_bytes:{} error:{:?}", num_bytes, &read_result.err());

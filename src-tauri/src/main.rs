@@ -3,8 +3,6 @@
     windows_subsystem = "windows"
 )]
 
-extern crate lettre;
-
 mod user;
 mod my_db;
 mod my_log;
