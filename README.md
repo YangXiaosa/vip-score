@@ -1,2 +1,2 @@
-# tauri-demo
-a tauri study project
+# supermarket
+会员积分系统
