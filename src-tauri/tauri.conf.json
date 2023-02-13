@@ -16,6 +16,9 @@
       "shell": {
         "all": false,
         "open": true
+      },"window": {
+        "all": true,
+        "create": true
       }
     },
     "bundle": {
@@ -64,7 +67,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "金国超市积分系统",
+        "title": "超市积分系统",
         "maximized": true
       }
     ]

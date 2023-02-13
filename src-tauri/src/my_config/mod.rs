@@ -33,6 +33,12 @@ pub static BAI_DU_WANG_PAN_CREATE_FILE_URL:&str = "https://pan.baidu.com/rest/2.
 static mut DB_CONFIG:Lazy<json::JsonValue> = Lazy::new(|| { return json::JsonValue::new_object(); });
 
 pub fn init_db_config() {
+    update_config();
+    let config_info = unsafe {format!("config is :{:?}", DB_CONFIG)};
+    log::info!("config is:{}",config_info);
+}
+
+fn update_config() {
     let con = my_db::get_user_con();
     let mut statement = con.prepare("select * from config").or_else(|error| {
         log::error!("select * from config error:{}", error);
@@ -43,8 +49,6 @@ pub fn init_db_config() {
         let value = statement.read::<String, _>("value").unwrap().into();
         unsafe { DB_CONFIG[key] = value; };
     }
-    let config_info = unsafe {format!("config is :{:?}", DB_CONFIG)};
-    log::info!("config is:{}",config_info);
 }
 
 pub fn get_bai_du_wang_pan_access_token() -> &'static str{
@@ -143,4 +147,36 @@ fn set_config_str(key: &str, value: &str) {
 
 fn set_config_i64(key: &str, value: i64) {
     unsafe { DB_CONFIG[key]= value.into() };
+}
+
+#[tauri::command]
+pub fn search_setting() -> String {
+    let mut result = json::JsonValue::new_object();
+    result["baiDuWangPanAppKey"] = get_config_str(BAI_DU_WANG_PAN_APP_KEY).into();
+    result["baiDuWangPanSecretKey"] = get_config_str(BAI_DU_WANG_PAN_SECRET_KEY).into();
+    result["baiDuWangPanRefreshToken"] = get_config_str(BAI_DU_WANG_PAN_REFRESH_TOKEN).into();
+    result["dbBackupDir"] = get_db_backup_dir().into();
+    result["adminEmail"] = get_config_str(ADMIN_MAIL).into();
+    result["adminEmailPassword"] = get_config_str(ADMIN_EMAIL_PASSWORD).into();
+    result["adminEmailServer"] = get_config_str(ADMIN_EMAIL_SERVER).into();
+    result["merchantName"] = get_config_str(MERCHANT_NAME).into();
+    return json::stringify(result);
+}
+
+#[tauri::command]
+pub fn save_setting(bai_du_wang_pan_app_key: &str, bai_du_wang_pan_secret_key: &str, 
+    bai_du_wang_pan_refresh_token: &str, db_backup_dir: &str, admin_email: &str, 
+    admin_email_password: &str, admin_email_server: &str, merchant_name: &str) -> String {
+    let mut result = json::JsonValue::new_object();
+    let con = my_db::get_user_con();
+    let sql = format!("replace into config(key, value) values('{}','{}'),('{}','{}'),('{}','{}'),('{}','{}'),('{}','{}'),('{}','{}'),('{}','{}'),('{}','{}');"
+    , BAI_DU_WANG_PAN_APP_KEY, bai_du_wang_pan_app_key, BAI_DU_WANG_PAN_SECRET_KEY, bai_du_wang_pan_secret_key
+    , BAI_DU_WANG_PAN_REFRESH_TOKEN, bai_du_wang_pan_refresh_token, DB_BACKUP_DIR, db_backup_dir
+    , ADMIN_MAIL, admin_email, ADMIN_EMAIL_PASSWORD, admin_email_password
+    , ADMIN_EMAIL_SERVER, admin_email_server, MERCHANT_NAME, merchant_name);
+    let sql_result = con.execute(&sql);
+    sql_result.unwrap_or_else(|error| log::error!("save setting error, code:{}, msg:{}, sql:{}", json::stringify(error.code), json::stringify(error.message), sql));
+    update_config();
+    result["code"] = 0.into();
+    return json::stringify(result);
 }

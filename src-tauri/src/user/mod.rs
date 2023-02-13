@@ -34,7 +34,7 @@ fn add_update_log(card: &str, name: &str, phone: &str, dress: &str, remarks: &st
     match query_result {
         Result::Ok(_) => {}
         Result::Err(error) => {
-            println!("sql error sql:{}, code:{}, msg:{}", log_sql, json::stringify(error.code), json::stringify(error.message));
+            log::error!("sql error sql:{}, code:{}, msg:{}", log_sql, json::stringify(error.code), json::stringify(error.message));
         }
     }
     return true;

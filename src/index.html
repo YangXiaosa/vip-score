@@ -14,6 +14,7 @@
         <li class="layui-this">首页</li>
         <li>用户管理</li>
         <li>操作日志</li>
+        <li>设置</li>
     </ul>
     <div class="layui-tab-content">
         <div class="layui-tab-item layui-show">
@@ -138,6 +139,61 @@
                 <tbody></tbody>
             </table>
         </div>
+        <div class="layui-tab-item">
+            <div class="layui-form" lay-filter="settingForm">
+                <form class="layui-form" action="" lay-filter="setting_form">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">百度网盘app_key:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="baiDuWangPanAppKey" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">百度网盘secret_key:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="baiDuWangPanSecretKey" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">百度网盘refresh_token:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="baiDuWangPanRefreshToken" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">数据文件备份目录:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="dbBackupDir" autocomplete="off" placeholder="默认为：./backup/BaiduSyncdisk/supermarket" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">管理员邮箱:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="adminEmail" autocomplete="off" placeholder="例如：12345678@qq.com" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">管理员邮箱授权码:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="adminEmailPassword" autocomplete="off" placeholder="用于登录第三方邮件客户端的专用密码" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">管理员邮箱服务器:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="adminEmailServer" autocomplete="off" placeholder="例如：smtp.163.com" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 150px;">商店名称:</label>
+                        <div class="layui-input-block" style="margin-right: 20px;margin-left: 180px;">
+                            <input type="text" name="merchantName" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <button id="saveSetting" class="layui-btn">保存</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 <div id="userForm" hidden>
@@ -190,6 +246,7 @@
         </form>
     </div>
 </div>
+
 <script type="text/html" id="toolbarUserList">
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="update" id="userUpdate">编辑</button>
@@ -287,6 +344,35 @@
                 } finally {
                     addScoreLock = false;
                 }
+                return false;
+            });
+        })();
+        //设置逻辑
+        (function setting() {
+            async function searchSetting() {
+                let result = JSON.parse(await invoke("search_setting", {}));
+                //回写表单数据
+                form.val("settingForm", {baiDuWangPanAppKey: result.baiDuWangPanAppKey, 
+                    baiDuWangPanSecretKey: result.baiDuWangPanSecretKey, 
+                    baiDuWangPanRefreshToken: result.baiDuWangPanRefreshToken, 
+                    dbBackupDir: result.dbBackupDir,
+                    adminEmail: result.adminEmail,
+                    adminEmailPassword: result.adminEmailPassword, 
+                    adminEmailServer: result.adminEmailServer, 
+                    merchantName: result.merchantName});
+            }
+            searchSetting();
+            async function saveSetting(data) {
+                let result = JSON.parse(await invoke("save_setting", data));
+                if (result.code !== 0) {
+                    layer.alert(result.msg, {time: 5000});
+                    return;
+                }
+                await searchSetting();
+                layer.msg("保存成功", {time: 1000})
+            }
+            $(document).on("click", "#saveSetting", function () {
+                saveSetting(form.val("settingForm"));
                 return false;
             });
         })();
