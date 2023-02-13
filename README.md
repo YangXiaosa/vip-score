@@ -8,3 +8,9 @@
 ![操作日志查询](https://upload-images.jianshu.io/upload_images/16938616-c78a8c11f67448e6.jpg "操作日志查询")
 4.设置：高级功能，一般由技术管理员维护，包括百度网盘，管理员邮箱，备份目录，商店名称配置
 ![设置](https://upload-images.jianshu.io/upload_images/16938616-cf5c2c1446bd0180.jpg "设置")
+
+不清楚的地方可以联系作者
+   
+  QQ:863168768
+     
+  微信：Xiaosa863168768
